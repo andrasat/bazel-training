@@ -1,0 +1,56 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@npm//nextjs:eslint/package_json.bzl", eslint_bin = "bin")
+
+SRCS = [
+    "page.tsx",
+    "layout.tsx",
+]
+
+js_library(
+    name = "styles",
+    srcs = [
+        "globals.css",
+    ],
+    visibility = ["//nextjs:__subpackages__"],
+)
+
+js_library(
+    name = "favicon",
+    srcs = [
+        "favicon.ico",
+    ],
+    visibility = ["//nextjs:__subpackages__"],
+)
+
+ts_project(
+    name = "app",
+    srcs = SRCS,
+    declaration = True,
+    resolve_json_module = True,
+    transpiler = "tsc",
+    tsconfig = "//nextjs:tsconfig",
+    visibility = ["//nextjs:__subpackages__"],
+    deps = [
+        "//nextjs:node_modules/@types/react",
+        "//nextjs:node_modules/@types/react-dom",
+        "//nextjs:node_modules/next",
+    ],
+)
+
+eslint_bin.eslint_test(
+    name = "eslint_test",
+    args = [
+        "--config $(location //nextjs:eslintrc)",
+    ] + ["{}/{}".format(
+        package_name(),
+        s,
+    ) for s in SRCS],
+    data = SRCS + [
+        "//nextjs:eslintrc",
+        "//nextjs:node_modules/@next/eslint-plugin-next",
+        "//nextjs:node_modules/eslint-config-next",
+        "//nextjs:node_modules/next",
+    ],
+    tags = ["lint"],
+)
